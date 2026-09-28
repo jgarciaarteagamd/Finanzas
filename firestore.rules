@@ -5,14 +5,12 @@ rules_version = '2';
 // Solo dejan leer y escribir a quien haya iniciado sesión con Google
 // usando uno de los correos de la lista de abajo. Nadie más puede ver
 // ni tocar los datos, aunque conozca la URL del proyecto.
-//
-// IMPORTANTE: cambia el correo de Sara antes de desplegar (busca el
-// texto "CORREO-DE-SARA-AQUI" en este archivo). El de Juan ya está puesto.
 function esFamiliaAutorizada() {
   return request.auth != null &&
     request.auth.token.email in [
       'jgarciaarteaga.md@gmail.com',
-      'CORREO-DE-SARA-AQUI@gmail.com'
+      'drjuanpablogarcia@gmail.com',
+      'drasaranaranjo@gmail.com'
     ];
 }
 
