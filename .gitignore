@@ -1,0 +1,11 @@
+node_modules/
+dist/
+dist-web/
+test/dist-web-test/
+*.log
+.DS_Store
+
+# Datos reales de la familia: no van al repositorio (aunque sea privado).
+# Se restauran a mano, una sola vez, desde la propia app.
+migracion/
+seed/

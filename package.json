@@ -1,0 +1,25 @@
+{
+  "name": "finanzas-garcia-naranjo",
+  "version": "1.0.0",
+  "description": "App de finanzas familiares: funciona como artefacto de Claude y como web independiente (Firebase + Gemini).",
+  "private": true,
+  "scripts": {
+    "build:artifact": "node build.mjs",
+    "build:web": "node build.web.mjs",
+    "test": "echo \"Ver carpeta test/ (Playwright, se ejecuta con python3)\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "esbuild": "^0.25.12",
+    "firebase": "^10.14.1",
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "pdfjs-dist": "3.11.174",
+    "xlsx": "0.18.5"
+  }
+}

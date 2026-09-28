@@ -1,0 +1,39 @@
+{
+  "config": {
+    "version": 2,
+    "mesInicio": "2026-09",
+    "cuentas": [
+      { "id": "cta-1", "nombre": "Santander de Luis", "titular": "Luis", "notas": "Cuenta principal." },
+      { "id": "cta-2", "nombre": "CaixaBank", "titular": "Luis", "notas": "Cuenta secundaria." },
+      { "id": "cta-3", "nombre": "BBVA (ahorro)", "titular": "Luis", "notas": "" },
+      { "id": "cta-4", "nombre": "Santander de Ana", "titular": "Ana", "notas": "" }
+    ],
+    "tarjetas": [
+      { "id": "tar-1", "nombre": "MasterCard Santander", "titular": "Luis", "cuentaDebitoId": "cta-1", "momento": "fin", "notas": "" }
+    ],
+    "creditos": [
+      {
+        "id": "cre-1", "nombre": "Coche familiar", "tipo": "Coche con cuota final", "cuota": 240, "cuenta": "cta-1", "momento": "inicio",
+        "fechaInicio": "2025-01", "fechaFin": "2027-08", "cuotaFinal": 12000, "fechaCuotaFinal": "2027-09", "capitalPendiente": null, "fechaCapital": null,
+        "objetivoId": "obj-2", "notas": "Dato de ejemplo para pruebas."
+      }
+    ],
+    "objetivos": [
+      { "id": "obj-1", "nombre": "Colchón de emergencia", "tipo": "colchon", "porcentaje": 60, "mesesDeseados": 6, "objetivo": null, "ahorradoBase": 500, "fechaObjetivo": null, "fechaInicioAportacion": null, "contingente": false, "cuentaOrigenId": null, "cuentaDestinoId": null, "notas": "" },
+      { "id": "obj-2", "nombre": "Cuota final coche", "tipo": "balloon", "porcentaje": 40, "mesesDeseados": null, "objetivo": 12000, "ahorradoBase": 0, "fechaObjetivo": "2027-09-01", "fechaInicioAportacion": null, "contingente": false, "cuentaOrigenId": null, "cuentaDestinoId": null, "notas": "" }
+    ]
+  },
+  "movimientos": [
+    { "id": "ing-1", "tipo": "ingreso", "clase": "recibo", "titular": "Ana", "nombre": "Nómina Ana", "importe": 2000, "frecuencia": "mensual", "cuenta": "cta-4", "momento": "fin", "notas": "" },
+    { "id": "ing-2", "tipo": "ingreso", "clase": "recibo", "titular": "Luis", "nombre": "Ingresos autónomo", "importe": 3500, "frecuencia": "mensual", "cuenta": "cta-1", "momento": "medio", "notas": "" },
+    { "id": "gas-1", "tipo": "gasto", "nombre": "Alquiler", "area": "vivienda", "sub": "Alquiler", "medio": "transferencia", "frecuencia": "mensual", "importe": 800, "cuenta": "cta-1", "momento": "inicio", "notas": "" },
+    { "id": "gas-2", "tipo": "gasto", "nombre": "Luz", "area": "vivienda", "sub": "Suministros", "medio": "recibo", "frecuencia": "mensual", "importe": 40, "cuenta": "cta-1", "momento": "inicio", "notas": "" },
+    { "id": "gas-3", "tipo": "gasto", "nombre": "Colegio", "area": "hijos", "sub": "Colegio", "medio": "recibo", "frecuencia": "mensual", "importe": 300, "cuenta": "cta-1", "momento": "inicio", "notas": "" },
+    { "id": "gas-4", "tipo": "gasto", "nombre": "RETA", "area": "trabajo", "sub": "Cuotas y seguros profesionales", "medio": "recibo", "frecuencia": "mensual", "importe": 290, "cuenta": "cta-1", "momento": "inicio", "notas": "" },
+    { "id": "gas-5", "tipo": "gasto", "nombre": "Seguro de salud", "area": "salud", "sub": "Seguros", "medio": "recibo", "frecuencia": "mensual", "importe": 60, "cuenta": "cta-2", "momento": "inicio", "notas": "" },
+    { "id": "gas-6", "tipo": "gasto", "nombre": "Seguro coche", "area": "transporte", "sub": "Seguros de coche", "medio": "recibo", "frecuencia": "mensual", "importe": 50, "cuenta": "cta-2", "momento": "inicio", "notas": "" },
+    { "id": "gas-7", "tipo": "gasto", "nombre": "Supermercado", "area": "alimentacion", "sub": "Supermercado", "medio": "tarjeta", "tarjetaId": "tar-1", "frecuencia": "mensual", "importe": 500, "notas": "" },
+    { "id": "gas-8", "tipo": "gasto", "nombre": "Streaming", "area": "otros", "sub": "Streaming", "medio": "tarjeta", "tarjetaId": "tar-1", "frecuencia": "mensual", "importe": 25, "notas": "" }
+  ],
+  "meses": {}
+}
