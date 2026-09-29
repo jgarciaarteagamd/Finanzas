@@ -161,5 +161,9 @@ export const MENSAJES_ERROR = {
   invalid_json: 'La respuesta de la IA llegó incompleta (el extracto puede ser muy largo). Prueba de nuevo o sube menos páginas.',
   prompt_too_large: 'El extracto es demasiado largo para una sola lectura. Súbelo por partes.',
   upstream_error: 'Falló la conexión con la IA. Prueba de nuevo.',
+  network_error: 'No se pudo conectar con Gemini. Comprueba la conexión y prueba de nuevo.',
+  model_unavailable: 'El modelo de Gemini configurado no está disponible para este proyecto. Hay que actualizar el modelo de la app.',
+  payment_required: 'Gemini indica que este proyecto necesita revisar su plan o saldo en Google AI Studio.',
+  server_error: 'Gemini está fallando temporalmente. Prueba de nuevo en unos minutos.',
   sin_texto: 'No se encontró texto en el archivo.',
 };

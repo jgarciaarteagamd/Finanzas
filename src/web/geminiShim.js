@@ -16,7 +16,8 @@
    ============================================================ */
 import { GEMINI_API_KEY } from './config.js';
 
-const MODELOS = { quick: 'gemini-2.5-flash-lite', default: 'gemini-2.5-flash', complex: 'gemini-2.5-pro' };
+// Los modelos 2.5 ya no están disponibles para todos los proyectos nuevos.
+const MODELOS = { quick: 'gemini-3.5-flash-lite', default: 'gemini-3.5-flash-lite', complex: 'gemini-3.8-flash' };
 // Si Google renombra o retira alguno de estos modelos, actualiza este
 // mapa (Google AI Studio, https://aistudio.google.com, lista los
 // modelos disponibles con su nombre exacto).
@@ -51,10 +52,15 @@ async function llamar(input, opts, comoJson) {
     });
   } catch (e) {
     if (e && e.name === 'AbortError') throw { code: 'cancelled', message: 'cancelado' };
-    throw { code: 'upstream_error', message: String(e) };
+    throw { code: 'network_error', message: String(e) };
   }
   if (!res.ok) {
-    const code = res.status === 429 ? 'rate_limited' : res.status === 400 ? 'invalid_request' : res.status === 401 || res.status === 403 ? 'not_granted' : 'upstream_error';
+    const code = res.status === 429 ? 'rate_limited'
+      : res.status === 404 ? 'model_unavailable'
+        : res.status === 400 ? 'invalid_request'
+          : res.status === 401 || res.status === 403 ? 'not_granted'
+            : res.status === 402 ? 'payment_required'
+              : res.status >= 500 ? 'server_error' : 'upstream_error';
     let msg = `HTTP ${res.status}`;
     try { const j = await res.json(); msg = j?.error?.message || msg; } catch (e) { /* sin cuerpo */ }
     throw { code, message: msg };
