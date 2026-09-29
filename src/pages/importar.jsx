@@ -12,6 +12,7 @@ const ICONO_TIPO = { pdf: FileText, excel: FileSpreadsheet, texto: FileSpreadshe
 const ACCEPT = '.pdf,.xlsx,.xls,.xlsm,.ods,.csv,.txt,.tsv,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp';
 
 export function ImportarPage({ state, mk, setMk, A, go }) {
+  const esWeb = !!window.__FINANZAS_WEB__;
   const [sample, setSample] = useState(undefined); // undefined: comprobando · null: no disponible
   const [cola, setCola] = useState([]);
   const [fase, setFase] = useState('inicio'); // inicio | leyendo | revisar | hecho
@@ -56,8 +57,8 @@ export function ImportarPage({ state, mk, setMk, A, go }) {
     } catch (e) {
       if ((e && e.code === 'cancelled') || (e && e.name === 'AbortError')) { setFase('inicio'); return; }
       const code = e && e.code;
-      if (code === 'not_granted' || code === 'sampling_disabled' || code === 'not_declared' || code === 'capability_disabled') setSample(null);
-      setError((code && MENSAJES_ERROR[code]) || (e && e.message && !code ? e.message : 'Algo falló al leer el extracto. Prueba de nuevo.'));
+      if ((!esWeb && (code === 'not_granted' || code === 'sampling_disabled' || code === 'not_declared' || code === 'capability_disabled')) || (esWeb && code === 'not_declared')) setSample(null);
+      setError((esWeb && code === 'not_granted' ? 'Gemini rechazó la clave o el acceso del proyecto. Revisa el estado de la clave en Google AI Studio.' : code && MENSAJES_ERROR[code]) || (e && e.message && !code ? e.message : 'Algo falló al leer el extracto. Prueba de nuevo.'));
       setFase('inicio');
     }
   };
@@ -91,7 +92,7 @@ export function ImportarPage({ state, mk, setMk, A, go }) {
       <PageHead title="Importar extractos" lead="Sube el extracto de una cuenta o de una tarjeta de crédito (PDF, Excel, CSV o una foto). La IA lee los movimientos, los relaciona con lo que tienes configurado y te propone los cambios. No se guarda nada hasta que lo apruebes." />
 
       {sample === null && (
-        <div className="banner"><AlertTriangle size={18} /><span><b>La lectura con IA no está disponible en esta vista.</b> Abre la app dentro de Claude (claude.ai o la app) y acepta el permiso para que use Claude cuando te lo pida.</span></div>
+        <div className="banner"><AlertTriangle size={18} /><span><b>La lectura con IA no está disponible en esta vista.</b> {esWeb ? 'Falta configurar la clave de Gemini en el despliegue.' : 'Abre la app dentro de Claude (claude.ai o la app) y acepta el permiso para que use Claude cuando te lo pida.'}</span></div>
       )}
 
       {fase === 'inicio' && (
@@ -108,7 +109,7 @@ export function ImportarPage({ state, mk, setMk, A, go }) {
             <div className="spin" />
             <div className="grow">
               <div style={{ fontWeight: 800 }}>{paso || 'Leyendo…'}</div>
-              <div className="small muted">La IA suele tardar entre 20 segundos y un par de minutos según lo largo que sea el extracto. La primera vez, Claude te pedirá permiso.</div>
+              <div className="small muted">La IA suele tardar entre 20 segundos y un par de minutos según lo largo que sea el extracto.{esWeb ? '' : ' La primera vez, Claude te pedirá permiso.'}</div>
             </div>
             <button className="btn" onClick={() => ctlRef.current && ctlRef.current.abort()}><Square size={14} /> Parar</button>
           </div>
@@ -163,7 +164,7 @@ function Subida({ disabled, onFiles, state, origenSel, setOrigenSel, pista, setP
           <li><span className="hn"><Sparkles size={15} /></span><div><b>La IA lo interpreta</b><div className="small muted">Detecta cuenta o tarjeta, categoriza cada movimiento y lo empareja con tus gastos, ingresos, tarjetas y créditos.</div></div></li>
           <li><span className="hn"><ListChecks size={15} /></span><div><b>Tú revisas y apruebas</b><div className="small muted">Importes reales, saldos, créditos nuevos o cambiados y datos que faltaban. Puedes deshacerlo después.</div></div></li>
         </ol>
-        <div className="tiny muted">El texto del extracto se envía a Claude para analizarlo y usa tu propio plan. Se guardan solo fecha, concepto, importe y categoría de cada movimiento; nunca números de cuenta o tarjeta.</div>
+        <div className="tiny muted">El texto del extracto se envía a {window.__FINANZAS_WEB__ ? 'Gemini' : 'Claude'} para analizarlo. Se guardan solo fecha, concepto, importe y categoría de cada movimiento; nunca números de cuenta o tarjeta.</div>
       </Card>
     </div>
   );

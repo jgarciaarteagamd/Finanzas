@@ -12,6 +12,7 @@ import { crearSample } from './geminiShim.js';
    tres capacidades con Firebase y Gemini, para que el resto del
    código no necesite saber dónde está corriendo. */
 let dbCache = null, samplecache = null, downloadsCache = null;
+window.__FINANZAS_WEB__ = true;
 window.claude = {
   use: async (nombre) => {
     if (nombre === 'db') return dbCache || (dbCache = crearDbFirestore());
