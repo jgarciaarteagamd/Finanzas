@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const E=await import('data:text/javascript;base64,'+Buffer.from(fs.readFileSync(new URL('../src/engine.js',import.meta.url))).toString('base64'));
+let s={config:{mesInicio:'2026-09',cuentas:['juan','sara','nino'].map(id=>({id,nombre:id})),objetivos:[],tarjetas:[],creditos:[]},movimientos:[{id:'j',tipo:'ingreso',importe:4000,cuenta:'juan',frecuencia:'mensual'},{id:'s',tipo:'ingreso',importe:2350,cuenta:'sara',frecuencia:'mensual'},{id:'d',tipo:'gasto',calculado:'diezmo',porcentaje:10,cuenta:'sara',frecuencia:'mensual',area:'donaciones'},{id:'t',tipo:'traspaso',importe:15,cuentaOrigenId:'juan',cuentaDestinoId:'nino',frecuencia:'mensual',momento:'inicio',area:'familia',sub:'Ahorros'}],meses:{},extractos:{}};
+let r=E.resumenMes(s,'2026-09');assert.equal(r.totalIngresos,6350);assert.equal(r.totalGastos,235);assert.equal(E.mediasMensuales(s,'2026-09').gastos,235);
+s.meses['2026-09']={reales:{s:2500}};assert.equal(E.resumenMes(s,'2026-09').totalGastos,250);
+s.movimientos.push({id:'comp',tipo:'traspaso',importe:100,cuentaOrigenId:'juan',cuentaDestinoId:'sara',frecuencia:'mensual',momento:'inicio'});assert.equal(E.resumenMes(s,'2026-09').totalGastos,250);
+s.meses['2026-09'].reales.d=635;assert.equal(E.resumenMes(s,'2026-09').totalGastos,635);delete s.meses['2026-09'].reales.d;
+s=E.guardarCategoria(s,{key:'familia',label:'Nuestra familia',slot:3});assert.equal(E.datosFlujo(s,'2026-09').links.find(l=>l.kind==='traspaso').label,'Nuestra familia / Ahorros');
+s=E.guardarSubcategoria(s,'familia','Ahorros','Ahorro infantil');assert.equal(s.movimientos.find(x=>x.id==='t').sub,'Ahorro infantil');assert.deepEqual(E.subcategorias(s,'familia'),['Ahorro infantil']);
+s=E.guardarCategoria(s,{key:'test',label:'Nueva',slot:4});s.movimientos.push({id:'g',tipo:'gasto',importe:20,cuenta:'juan',frecuencia:'mensual',area:'test',sub:'Uno'});assert.equal(E.resumenMes(s,'2026-09').porArea.find(a=>a.key==='test').importe,20);
+s.extractos.e={id:'e',mk:'2026-09',tipo:'cuenta',cuentaId:'juan',items:[{destino:'puntual',signo:'gasto',importe:30,area:'test',sub:'Uno',concepto:'Tienda',fecha:'2026-09-02'},{destino:'puntual',signo:'gasto',importe:5,area:'otros',concepto:'Tienda',fecha:'2026-09-02'}]};s.meses['2026-09'].reales['ext:e:g:test:tienda']=44;
+const total=E.resumenMes(s,'2026-09').totalGastos;
+s=E.eliminarCategoria(s,'test');assert.equal(E.resumenMes(s,'2026-09').totalGastos,total);assert.equal(s.movimientos.find(x=>x.id==='g').area,'otros');assert.equal(s.meses['2026-09'].reales['ext:e:g:otros:tienda'],49);assert.ok(!E.categorias(s).some(a=>a.key==='test'));
+s=E.guardarSubcategoria(s,'familia','Ahorro infantil','');assert.equal(s.movimientos.find(x=>x.id==='t').sub,'');
+const f=E.datosFlujo(s,'2026-09');assert.equal(f.links.filter(l=>l.kind==='traspaso').length,2);assert.equal(f.links.filter(l=>l.kind==='ingreso').reduce((n,l)=>n+l.value,0),6500);assert.equal(f.resumen.totalGastos,total);
+assert.equal(E.eliminarCategoria(s,'otros'),s);assert.equal(E.eliminarCategoria(s,'creditos'),s);
+console.log('PASS: diezmo por cuenta y real, exclusión de traspasos, catálogo, renombrado, borrado sin perder importes, extractos y flujo.');

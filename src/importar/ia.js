@@ -26,7 +26,7 @@ export function contexto(state) {
   const subs = {};
   movimientos.forEach((x) => { if (x.tipo === 'gasto' && x.sub) (subs[x.area] = subs[x.area] || new Set()).add(x.sub); });
   L.push('\nCATEGORÍAS (clave: nombre — subcategorías ya usadas):');
-  E.AREAS.forEach((a) => L.push(`${a.key}: ${a.label}${subs[a.key] ? ` — ${[...subs[a.key]].join(', ')}` : ''}`));
+  E.categorias(state).forEach((a) => L.push(`${a.key}: ${a.label} — ${E.subcategorias(state, a.key).join(', ')}`));
   return L.join('\n');
 }
 

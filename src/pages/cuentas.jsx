@@ -122,10 +122,10 @@ export function CuentasPage({ state, mk, A, go }) {
                     <div><div className="eyebrow">Media</div><div className="v">{E.eur0(media)}</div></div>
                   </div>
                   {linea && linea.conExtracto && <div className="eyebrow">Según el extracto ({linea.movsExtracto} movimientos)</div>}
-                  {delMes.length > 0 && <StackBar parts={Object.entries(porArea).map(([k, v]) => ({ key: k, label: E.areaDe(k).label, value: v, color: colorArea(k) }))} />}
+                  {delMes.length > 0 && <StackBar parts={Object.entries(porArea).map(([k, v]) => ({ key: k, label: E.areaDe(k, state).label, value: v, color: colorArea(k, state) }))} />}
                   <div className="stack" style={{ gap: 4 }}>
                     {delMes.sort((a, b) => b.importe - a.importe).map((x) => (
-                      <div key={x.id} className="row between small"><span className="row" style={{ gap: 7 }}><span className="swatch" style={{ background: colorArea(x.area) }} />{x.nombre}</span><span className="num">{E.eur(x.importe)}</span></div>
+                      <div key={x.id} className="row between small"><span className="row" style={{ gap: 7 }}><span className="swatch" style={{ background: colorArea(x.area, state) }} />{x.nombre}</span><span className="num">{E.eur(x.importe)}</span></div>
                     ))}
                     {delMes.length === 0 && <div className="small muted">Nada configurado para este mes.</div>}
                   </div>

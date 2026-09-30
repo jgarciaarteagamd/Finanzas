@@ -313,7 +313,7 @@ function FilaMov({ d, state, b, setItem, esTarjeta }) {
   const off = bloqueado || it.destino === 'ignorar';
   const opciones = useMemo(() => opcionesLinea(state, b, it.signo), [state, b.origen, b.creditosIA, it.signo]);
   const valor = it.destino === 'linea' && it.linea ? `l:${it.linea}` : it.destino;
-  const subs = useMemo(() => [...new Set(state.movimientos.filter((x) => x.area === it.area && x.sub).map((x) => x.sub))], [state.movimientos, it.area]);
+  const subs = useMemo(() => E.subcategorias(state, it.area), [state, it.area]);
   const cambiar = (v) => {
     if (v === 'puntual' || v === 'ignorar') { setItem(it.uid, { destino: v, linea: null }); return; }
     if (v.startsWith('c:')) { const mov = state.movimientos.find((x) => x.id === v.slice(2)); setItem(it.uid, { destino: 'puntual', linea: null, area: mov.area || 'otros', sub: mov.sub || '' }); return; }
@@ -333,9 +333,9 @@ function FilaMov({ d, state, b, setItem, esTarjeta }) {
       </span>
       <span className={`i num ${it.signo === 'ingreso' ? 'pos' : ''}`}>{it.signo === 'ingreso' ? '+' : '−'}{E.eur(it.importe)}</span>
       <span className="a">
-        <span className="swatch" style={{ background: colorArea(it.area) }} />
+        <span className="swatch" style={{ background: colorArea(it.area, state) }} />
         <select className="sel-sm" aria-label="Categoría" disabled={bloqueado || (it.destino === 'linea' && state.movimientos.some((x) => x.id === it.linea))} value={it.area} onChange={(e) => setItem(it.uid, { area: e.target.value })}>
-          {E.AREAS.map((a) => <option key={a.key} value={a.key}>{a.label}</option>)}
+          {E.categorias(state).map((a) => <option key={a.key} value={a.key}>{a.label}</option>)}
         </select>
         <input className="sel-sm sub" aria-label="Subcategoría" disabled={bloqueado} value={it.sub || ''} placeholder="Subcategoría" list={`subs-${it.area}`} onChange={(e) => setItem(it.uid, { sub: e.target.value })} />
         <datalist id={`subs-${it.area}`}>{subs.map((s) => <option key={s} value={s} />)}</datalist>

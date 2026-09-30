@@ -19,7 +19,7 @@ export function Traspasos({ state, mk, A }) {
           const l = actuales.find((x) => x.id === t.id);
           return <div key={t.id} className="row between wrap" style={{ gap: 12 }}>
             <div className="grow"><b>{t.nombre}</b><div className="small">{E.nombreCuenta(state, t.cuentaOrigenId)} → {E.nombreCuenta(state, t.cuentaDestinoId)}</div>
-              <div className="tiny muted">{E.FRECUENCIAS.find((f) => f.key === t.frecuencia)?.label} · {E.MOMENTOS.find((m) => m.key === t.momento)?.label} · Previsto: {E.eur(t.importe)}</div>
+              <div className="tiny muted">{t.area && `${E.areaDe(t.area, state).label}${t.sub ? ` / ${t.sub}` : ''} · `}{E.FRECUENCIAS.find((f) => f.key === t.frecuencia)?.label} · {E.MOMENTOS.find((m) => m.key === t.momento)?.label} · Previsto: {E.eur(t.importe)}</div>
             </div>
             {l ? <>
               <span className={`pill ${l.confirmado ? 'ok' : 'warn'}`}>{l.confirmado ? (l.real === 0 ? 'Omitido este mes' : 'Realizado') : 'Pendiente'}</span>

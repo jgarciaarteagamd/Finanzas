@@ -11,7 +11,7 @@ import * as E from '../engine.js';
 export const NUEVA = '__nueva__';
 const norm = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 const firma = (it) => `${it.fecha}|${it.signo}|${E.r2(it.importe).toFixed(2)}|${norm(it.concepto).slice(0, 24)}`;
-const AREAS_OK = new Set(E.AREAS.map((a) => a.key));
+
 
 /* Intenta reconocer la cuenta o tarjeta del extracto por su nombre. */
 function adivinarOrigen(state, doc, tipo) {
@@ -85,7 +85,7 @@ export function borrador(state, analisis, { archivo, forzarOrigen, mkSel }) {
     if (m.clase === 'traspaso') destino = 'ignorar';
     if (tipo === 'tarjeta' && m.clase === 'cargo_tarjeta') { destino = 'ignorar'; linea = null; }
     if (clasificarComo) mov = clasificarComo;
-    const area = mov && mov.area ? mov.area : AREAS_OK.has(m.area) ? m.area : linea && linea.startsWith('credito') ? 'creditos' : 'otros';
+    const area = mov && mov.area ? mov.area : E.categorias(state).some((a) => a.key === m.area) ? m.area : linea && linea.startsWith('credito') ? 'creditos' : 'otros';
     return {
       uid: `m${n}`, fecha: m.fecha, concepto: m.concepto, comercio: m.comercio, importe: E.r2(Math.abs(m.i)), signo, clase: m.clase,
       area, sub: mov ? mov.sub || '' : m.sub, linea: destino === 'linea' ? linea : null, destino, recurrente: m.recurrente, saldo: m.saldo, i: m.i,
@@ -203,7 +203,7 @@ export function propuestas(state, b) {
       : { tipo: 'gasto', nombre: E.nombreItem(it), area: it.area, sub: it.sub || '', importe, frecuencia: 'mensual', notas: 'Creado desde un extracto.',
           ...(esCuenta ? { medio: E.medioDeClase(it.clase), cuenta: origenId, momento: E.momentoDeFecha(it.fecha) } : { medio: 'tarjeta', tarjetaId: origenId }) };
     out.push({ id: `rec:${g.k}`, tipo: 'recurrente', grupo: 'Nuevos en tu configuración', uids: g.items, mov, def: it.clase === 'recibo',
-      titulo: `Añadir «${mov.nombre}» como ${esIngreso ? 'ingreso' : 'gasto'} mensual`, detalle: `${E.eur(importe)} al mes${esIngreso ? '' : ` · ${E.areaDe(mov.area).label}${mov.sub ? ` / ${mov.sub}` : ''}`}` });
+      titulo: `Añadir «${mov.nombre}» como ${esIngreso ? 'ingreso' : 'gasto'} mensual`, detalle: `${E.eur(importe)} al mes${esIngreso ? '' : ` · ${E.areaDe(mov.area, state).label}${mov.sub ? ` / ${mov.sub}` : ''}`}` });
   });
 
   // estimados: rellenar los vacíos y avisar de cambios

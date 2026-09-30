@@ -27,7 +27,21 @@ export const AREAS = [
   { key: 'creditos', label: 'Créditos', slot: 8 },
   { key: 'otros', label: 'Ocio y otros', slot: 0 },
 ];
-export const areaDe = (key) => AREAS.find((a) => a.key === key) || AREAS[AREAS.length - 1];
+export const categorias = (state) => state?.config?.categorias || [...AREAS,
+  { key: 'familia', label: 'Familia', slot: 3 },
+  { key: 'suscripciones', label: 'Suscripciones', slot: 2 },
+  { key: 'compensaciones', label: 'Compensaciones', slot: 6 }];
+export const areaDe = (key, state) => categorias(state).find((a) => a.key === key) || { key: key || 'otros', label: key || 'Sin categoría', slot: 0 };
+export function subcategorias(state, area) {
+  const configuradas = state.config.subcategorias?.[area] || (area === 'familia' && !state.config.subcategorias ? ['Ahorros'] : []);
+  return [...new Set([...configuradas, ...state.movimientos.filter((x) => x.area === area && x.sub).map((x) => x.sub),
+    ...Object.values(state.extractos || {}).flatMap((e) => (e.items || []).filter((x) => x.area === area && x.sub).map((x) => x.sub))])].sort((a,b) => a.localeCompare(b, 'es'));
+}
+// Reasignar etiquetas conserva importes, identificadores y confirmaciones.
+export function cambiarEtiqueta(state, area, sub, destinoArea, destinoSub = '') {
+  const cambiar = (x) => x.area === area && (sub === null || x.sub === sub) ? { ...x, area: destinoArea, sub: destinoSub } : x;
+  return { ...state, movimientos: state.movimientos.map(cambiar), extractos: Object.fromEntries(Object.entries(state.extractos || {}).map(([id,e]) => [id, { ...e, items: (e.items || []).map(cambiar) }])) };
+}
 
 export const MEDIOS = [
   { key: 'recibo', label: 'Recibos domiciliados' },
@@ -127,7 +141,7 @@ export function lineasDelMes(state, mk) {
   // gastos directos (no de tarjeta)
   movimientos.filter((x) => x.tipo === 'gasto' && !(x.medio === 'tarjeta' && x.tarjetaId) && aplica(x, mk)).forEach((x) => {
     const r = real(x.id);
-    const est = x.calculado === 'diezmo' ? (totalIngresos * (x.porcentaje ?? 10)) / 100 : Number(x.importe) || 0;
+    const est = x.calculado === 'diezmo' ? (ingresos.filter((l) => x.cuenta && l.cuenta === x.cuenta).reduce((s, l) => s + l.importe, 0) * (x.porcentaje ?? 10)) / 100 : Number(x.importe) || 0;
     gastos.push({
       key: x.id, tipo: 'gasto', origen: 'mov', nombre: x.nombre, estimado: r2(est), real: r,
       importe: r ?? r2(est), confirmado: r !== undefined, cuenta: x.cuenta, momento: x.momento || 'fin',
@@ -296,7 +310,7 @@ export function resumenMes(state, mk) {
     a.subs.set(sk, s);
     areas.set(t.area, a);
   }));
-  const porArea = AREAS.map((def) => {
+  const porArea = categorias(state).map((def) => {
     const a = areas.get(def.key);
     if (!a) return null;
     return {
@@ -440,12 +454,22 @@ export function datosFlujo(state, mk) {
     trozos(l).forEach((t) => {
       if (!(t.importe > 0)) return;
       const dest = `area:${t.area}`;
-      add(dest, areaDe(t.area).label, 2, 'area', { area: t.area, slot: areaDe(t.area).slot });
+      add(dest, areaDe(t.area, state).label, 2, 'area', { area: t.area, slot: areaDe(t.area, state).slot });
       const k = `${l.cuenta}|${t.area}`;
       salidasCuenta.set(k, (salidasCuenta.get(k) || 0) + t.importe);
     });
   });
   salidasCuenta.forEach((v, k) => { const [c, a] = k.split('|'); links.push({ from: `cta:${c}`, to: `area:${a}`, value: v, kind: 'gasto', area: a }); });
+
+  traspasosDelMes(state, mk).forEach((t) => {
+    if (!(t.importe > 0) || t.cuentaOrigenId === t.cuentaDestinoId) return;
+    if (![t.cuentaOrigenId, t.cuentaDestinoId].every((id) => state.config.cuentas.some((c) => c.id === id))) return;
+    const from = `cta:${t.cuentaOrigenId}`, to = `cta:${t.cuentaDestinoId}`;
+    add(from, nombreCuenta(state, t.cuentaOrigenId), 1, 'cuenta');
+    add(to, nombreCuenta(state, t.cuentaDestinoId), 1, 'cuenta');
+    const etiqueta = t.area ? `${areaDe(t.area, state).label}${t.sub ? ` / ${t.sub}` : ''}` : 'Sin etiqueta';
+    links.push({ from, to, value: t.importe, kind: 'traspaso', label: etiqueta, nombre: t.nombre, slot: areaDe(t.area, state).slot, confirmado: t.confirmado });
+  });
 
   // equilibrar cada cuenta: lo que sobra queda como superávit; lo que falta sale de su saldo previo
   const saldoPrevioId = 'src:saldo';
@@ -492,7 +516,7 @@ export function mediasMensuales(state, mk) {
   const ingresos = movs.filter((x) => x.tipo === 'ingreso' && x.frecuencia !== 'esporadico' && enRango(x, mk))
     .reduce((s, x) => s + equivalenteMensual(x), 0);
   const gastosMov = movs.filter((x) => x.tipo === 'gasto' && x.frecuencia !== 'esporadico' && enRango(x, mk))
-    .reduce((s, x) => s + equivalenteMensual(x, ingresos), 0);
+    .reduce((s, x) => s + equivalenteMensual(x, movs.filter((i) => i.tipo === 'ingreso' && x.cuenta && i.cuenta === x.cuenta && i.frecuencia !== 'esporadico' && enRango(i, mk)).reduce((n, i) => n + equivalenteMensual(i), 0)), 0);
   const cuotas = (state.config.creditos || []).filter((c) => enRango(c, mk)).reduce((s, c) => s + (Number(c.cuota) || 0), 0);
   const gastos = gastosMov + cuotas;
   return { ingresos, gastos, superavit: ingresos - gastos };
@@ -693,3 +717,42 @@ export function migrarV1(old, base) {
 }
 
 export const nid = (p) => `${p}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+export function guardarCategoria(state, categoria) {
+  const lista = categorias(state);
+  return { ...state, config: { ...state.config, categorias: lista.some((a) => a.key === categoria.key) ? lista.map((a) => a.key === categoria.key ? categoria : a) : [...lista, categoria] } };
+}
+export function eliminarCategoria(state, key) {
+  if (['otros', 'creditos'].includes(key)) return state;
+  let next = cambiarEtiqueta(state, key, null, 'otros');
+  // Las líneas importadas agrupan por categoría. Conserva los reales incluso
+  // si al reasignar se fusionan dos grupos del mismo comercio.
+  const meses = { ...state.meses };
+  for (const mk of new Set(Object.values(state.extractos || {}).map((e) => e.mk))) {
+    const reales = state.meses?.[mk]?.reales || {};
+    const lineas = lineasPuntuales(extractosDelMes(state, mk), (k) => reales[k] == null ? undefined : Number(reales[k]));
+    const grupos = new Map();
+    for (const l of lineas) {
+      const prefijo = `ext:${l.extractoId}:g:${key}:`;
+      const destino = l.key.startsWith(prefijo) ? `ext:${l.extractoId}:g:otros:${l.key.slice(prefijo.length)}` : l.key;
+      const g = grupos.get(destino) || { total: 0, keys: [], cambia: false, real: false };
+      g.total += l.importe; g.keys.push(l.key); g.cambia ||= destino !== l.key; g.real ||= reales[l.key] != null;
+      grupos.set(destino, g);
+    }
+    const nuevos = { ...reales };
+    let cambio = false;
+    for (const [destino, g] of grupos) if (g.cambia && g.real) {
+      g.keys.forEach((k) => { delete nuevos[k]; }); nuevos[destino] = r2(g.total); cambio = true;
+    }
+    if (cambio) meses[mk] = { ...state.meses[mk], reales: nuevos };
+  }
+  next = { ...next, meses };
+  const subs = Object.fromEntries(categorias(state).filter((a) => a.key !== key).map((a) => [a.key, subcategorias(state, a.key)]));
+  return { ...next, config: { ...next.config, categorias: categorias(state).filter((a) => a.key !== key), subcategorias: subs } };
+}
+export function guardarSubcategoria(state, area, anterior, nombre) {
+  const subs = Object.fromEntries(categorias(state).map((a) => [a.key, subcategorias(state, a.key)]));
+  const next = anterior ? cambiarEtiqueta(state, area, anterior, area, nombre) : state;
+  subs[area] = [...new Set([...(subs[area] || []).filter((s) => s !== anterior), ...(nombre ? [nombre] : [])])];
+  return { ...next, config: { ...next.config, subcategorias: subs } };
+}

@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, CreditCard, Landmark, ArrowLeftRight, Bankno
 import * as E from '../engine.js';
 import { StackBar } from '../charts.jsx';
 
-export const colorArea = (key) => `var(--s${E.areaDe(key).slot})`;
+export const colorArea = (key, state) => `var(--s${E.areaDe(key, state).slot})`;
 export const COLOR_MEDIO = { recibo: 'var(--m1)', tarjeta: 'var(--m2)', transferencia: 'var(--m3)', efectivo: 'var(--m4)' };
 export const ICONO_MEDIO = { recibo: Landmark, tarjeta: CreditCard, transferencia: ArrowLeftRight, efectivo: Banknote };
 
@@ -21,9 +21,9 @@ export function AreaList({ porArea, total, abiertas: abiertasIni = [], max, onPi
         return (
           <div key={a.key}>
             <button className="arearow" onClick={() => (onPick ? onPick(a.key) : toggle(a.key))} aria-expanded={onPick ? undefined : open}>
-              <span className="nm">{!onPick && !compact && <Chev size={15} className="muted" />}<span className="swatch" style={{ background: colorArea(a.key) }} /><span className="t">{a.label}</span></span>
+              <span className="nm">{!onPick && !compact && <Chev size={15} className="muted" />}<span className="swatch" style={{ background: `var(--s${a.slot ?? 0})` }} /><span className="t">{a.label}</span></span>
               <span className="vl">{E.eur0(a.importe)}<small>{total > 0 ? E.pct((a.importe / total) * 100) : ''}</small></span>
-              <div className="bar"><span style={{ width: `${(a.importe / top) * 100}%`, background: colorArea(a.key) }} /></div>
+              <div className="bar"><span style={{ width: `${(a.importe / top) * 100}%`, background: `var(--s${a.slot ?? 0})` }} /></div>
             </button>
             {open && !onPick && (
               <div className="subrows">
@@ -72,10 +72,10 @@ export function MedioList({ state, porMedio, total }) {
   );
 }
 
-export function LegendAreas({ keys }) {
+export function LegendAreas({ keys, state }) {
   return (
     <div className="legend">
-      {keys.map((k) => <span key={k}><span className="swatch" style={{ background: colorArea(k) }} />{E.areaDe(k).label}</span>)}
+      {keys.map((k) => <span key={k}><span className="swatch" style={{ background: colorArea(k, state) }} />{E.areaDe(k, state).label}</span>)}
     </div>
   );
 }

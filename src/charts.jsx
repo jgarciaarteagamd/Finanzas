@@ -200,7 +200,7 @@ export function Sankey({ data, height = 400 }) {
       let yy = Math.max(10, (H - tot) / 2);
       c.forEach((n, i) => { n.x = xs[ci]; n.h = hs[i]; n.y = yy + (slots[i] - hs[i]) / 2; yy += slots[i] + pad; });
     });
-    const links = data.links.map((l) => ({ ...l, s: byId[l.from], t: byId[l.to], w: Math.max(1, l.value * scale) }));
+    const links = data.links.map((l) => ({ ...l, s: byId[l.from], t: byId[l.to], w: l.kind === 'traspaso' ? Math.max(2, Math.min(10, l.value * scale)) : Math.max(1, l.value * scale) }));
     nodes.forEach((n) => {
       let o = 0; links.filter((l) => l.s === n).sort((a, b) => a.t.y - b.t.y).forEach((l) => { l.sy = n.y + o + l.w / 2; o += l.w; });
       let i = 0; links.filter((l) => l.t === n).sort((a, b) => a.s.y - b.s.y).forEach((l) => { l.ty = n.y + i + l.w / 2; i += l.w; });
@@ -209,18 +209,19 @@ export function Sankey({ data, height = 400 }) {
     return { nodes, links, bottom };
   }, [data, H, W]);
 
-  const colorLink = (l) => (l.kind === 'ingreso' ? 'var(--in)' : l.kind === 'saldo' ? 'var(--s0)' : l.kind === 'superavit' ? 'var(--sur)' : `var(--s${l.t.slot ?? 0})`);
+  const colorLink = (l) => (l.kind === 'traspaso' ? `var(--s${l.slot ?? 0})` : l.kind === 'ingreso' ? 'var(--in)' : l.kind === 'saldo' ? 'var(--s0)' : l.kind === 'superavit' ? 'var(--sur)' : `var(--s${l.t.slot ?? 0})`);
   const colorNode = (n) => (n.kind === 'ingreso' ? 'var(--in)' : n.kind === 'saldo' ? 'var(--s0)' : n.kind === 'superavit' ? 'var(--sur)' : n.kind === 'cuenta' ? 'var(--ink-2)' : `var(--s${n.slot ?? 0})`);
   const Hh = Math.ceil(layout.bottom + 8);
   return (
     <div className="chart sankey-wrap" ref={tip.ref} onMouseLeave={tip.hide} style={{ overflowX: 'auto' }}>
       <svg viewBox={`0 0 ${W} ${Hh}`} style={{ width: W, maxWidth: 'none' }} role="img" aria-label="Flujo del dinero: de dónde viene, por qué cuenta pasa y a dónde va">
         {layout.links.map((l, i) => {
-          const x0 = l.s.x + nw, x1 = l.t.x, xm = (x0 + x1) / 2;
+          const interno = l.kind === 'traspaso';
+          const x0 = interno ? l.s.x : l.s.x + nw, x1 = l.t.x, xm = interno ? l.s.x - 95 - (i % 4) * 22 : (x0 + x1) / 2;
           return (
             <path key={i} className="sankey-link" d={`M${x0},${l.sy} C${xm},${l.sy} ${xm},${l.ty} ${x1},${l.ty}`} fill="none"
-              stroke={colorLink(l)} strokeOpacity={0.38} strokeWidth={l.w}
-              onMouseMove={(e) => tip.show(e, <div><b>{l.s.label}</b> → <b>{l.t.label}</b><div className="tr"><span>Importe</span><b>{eur0(l.value)}</b></div></div>)} />
+              stroke={colorLink(l)} strokeOpacity={interno ? 0.75 : 0.38} strokeWidth={l.w} strokeDasharray={interno ? "5 3" : undefined}
+              onMouseMove={(e) => tip.show(e, <div><b>{l.s.label}</b> → <b>{l.t.label}</b>{interno && <div>Traspaso · {l.label} · {l.confirmado ? 'real' : 'previsto'}</div>}<div className="tr"><span>Importe</span><b>{eur0(l.value)}</b></div></div>)} />
           );
         })}
         {layout.nodes.map((n) => {
@@ -236,6 +237,13 @@ export function Sankey({ data, height = 400 }) {
           );
         })}
       </svg>
+      {data.links.some((l) => l.kind === 'traspaso') && <div className="stack" style={{ marginTop: 12 }}>
+        <b className="small">Traspasos entre cuentas · franjas discontinuas</b>
+        {data.links.filter((l) => l.kind === 'traspaso').map((l, i) => <div key={i} className="row between wrap small" style={{ gap: 8 }}>
+          <span><span className="swatch" style={{ background: colorLink(l), display: 'inline-block', marginRight: 6 }} /><b>{l.label}</b> · {data.nodes.find((n) => n.id === l.from)?.label} → {data.nodes.find((n) => n.id === l.to)?.label}</span>
+          <span>{eur0(l.value)} · {l.confirmado ? 'real' : 'previsto'}</span>
+        </div>)}
+      </div>}
       {tip.node}
     </div>
   );
