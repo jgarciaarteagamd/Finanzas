@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const E = await import('data:text/javascript;base64,'+Buffer.from(fs.readFileSync(new URL('../src/engine.js',import.meta.url),'utf8')).toString('base64'));
+const s={config:{mesInicio:'2026-09',cuentas:['a','b','c','d'].map(id=>({id})),objetivos:[],tarjetas:[],creditos:[]},meses:{'2026-09':{saldos:{a:100,b:0,c:0,d:0}}},movimientos:[{id:'income',tipo:'ingreso',importe:1000,cuenta:'a',frecuencia:'mensual'},{id:'tithe',tipo:'gasto',calculado:'diezmo',porcentaje:10,cuenta:'a',frecuencia:'mensual'},...[15,15,10].map((importe,i)=>({id:'t'+i,tipo:'traspaso',importe,cuentaOrigenId:'a',cuentaDestinoId:['b','c','d'][i],frecuencia:'mensual',momento:'inicio',fechaInicio:'2026-09'}))]};
+const balances=mk=>E.flujoCuentas(s,mk).cuentas.map(c=>c.saldoFinal);
+const r=E.resumenMes(s,'2026-09');assert.equal(r.totalIngresos,1000);assert.equal(r.totalGastos,100);assert.equal(r.superavit,900);
+assert.deepEqual(balances('2026-09'),[960,15,15,10]);
+s.meses['2026-09'].reales={t0:22.5,t1:0};assert.deepEqual(balances('2026-09'),[967.5,22.5,0,10]);assert.equal(balances('2026-09').reduce((a,c)=>a+c,0),1000);
+s.movimientos.push({id:'one',tipo:'traspaso',importe:5,cuentaOrigenId:'b',cuentaDestinoId:'c',frecuencia:'esporadico',mesEsporadico:9,anoEsporadico:2026,momento:'medio'});
+assert.equal(E.traspasosDelMes(s,'2026-09').length,4);assert.equal(E.traspasosDelMes(s,'2026-10').length,3);assert.equal(E.traspasosDelMes(s,'2026-08').length,0);
+assert.deepEqual(E.flujoCuentas(s,'2026-10').cuentas.map(c=>c.saldoInicial),[967.5,17.5,5,10]);
+s.movimientos[2].fechaFin='2026-09';assert.equal(E.traspasosDelMes(s,'2026-10').length,2);
+console.log('PASS: saldos, conservación, diezmo, real, omisión, recurrencia, puntual, fecha final y arrastre.');

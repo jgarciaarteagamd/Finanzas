@@ -248,3 +248,28 @@ export function ObjetivoForm({ open, item, state, onSave, onDelete, onClose }) {
       onSave={(o) => onSave({ ...o, id: o.id || nid('obj'), cuentaOrigenId: o.cuentaOrigenId || null, cuentaDestinoId: o.cuentaDestinoId || null, fechaInicioAportacion: o.fechaInicioAportacion || null, fechaObjetivo: o.fechaObjetivo || null })} />
   );
 }
+
+export function TraspasoForm({ open, item, state, mk, onSave, onDelete, onClose }) {
+  const cuentas = state.config.cuentas.map((c) => ({ value: c.id, label: `${c.nombre} · ${c.titular || 'Familia'}` }));
+  const initial = item || { frecuencia: 'mensual', momento: 'inicio', fechaInicio: mk,
+    mesEsporadico: String(Number(mk.slice(5))), anoEsporadico: Number(mk.slice(0, 4)) };
+  const fields = [
+    { name: 'nombre', label: 'Concepto', required: true, placeholder: 'Ej. Aportación a BBVA' },
+    { name: 'cuentaOrigenId', label: 'Cuenta de origen', type: 'select', options: cuentas, placeholder: 'Selecciona cuenta', required: true },
+    { name: 'cuentaDestinoId', label: 'Cuenta de destino', type: 'select', options: cuentas, placeholder: 'Selecciona cuenta', required: true },
+    { name: 'importe', label: 'Importe (€)', type: 'money', required: true },
+    { name: 'momento', label: 'Momento del mes', type: 'select', options: MOM_OPTS },
+    ...camposFrecuencia,
+    { name: 'notas', label: 'Notas', type: 'textarea' },
+  ];
+  return <FormDrawer open={open} title={item ? 'Editar traspaso' : 'Nuevo traspaso'} initial={initial} fields={fields}
+    onClose={onClose} onDelete={item ? onDelete : null}
+    validate={(v) => {
+      if (v.cuentaOrigenId === v.cuentaDestinoId) return 'Elige dos cuentas distintas.';
+      if (![v.cuentaOrigenId, v.cuentaDestinoId].every((id) => cuentas.some((c) => c.value === id))) return 'Selecciona cuentas existentes.';
+      if (!(v.importe > 0)) return 'El importe debe ser mayor que cero.';
+      if (v.fechaInicio && v.fechaFin && v.fechaFin < v.fechaInicio) return 'La fecha final debe ser posterior a la inicial.';
+      if (v.frecuencia === 'esporadico' && (!Number.isInteger(Number(v.anoEsporadico)) || Number(v.anoEsporadico) < 1900)) return 'Indica un año válido.';
+      return '';
+    }} onSave={(v) => onSave(limpiarFrecuencia({ ...v, tipo: 'traspaso', id: v.id || nid('tras') }))} />;
+}
