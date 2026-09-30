@@ -1,3 +1,4 @@
+import { Traspasos } from './traspasos.jsx';
 import React, { useMemo, useState } from 'react';
 import { Plus, Pencil, ArrowRight, Landmark, CreditCard, Wallet, Scale } from 'lucide-react';
 import * as E from '../engine.js';
@@ -30,6 +31,8 @@ export function CuentasPage({ state, mk, A, go }) {
         <Seg value={vista} onChange={setVista} ariaLabel="Vista" options={[{ key: 'cuentas', label: 'Cuentas' }, { key: 'tarjetas', label: 'Tarjetas' }]} />
         <button className="btn primary" onClick={() => (vista === 'cuentas' ? setEditC('nuevo') : setEditT('nuevo'))}><Plus size={16} /> {vista === 'cuentas' ? 'Nueva cuenta' : 'Nueva tarjeta'}</button>
       </PageHead>
+
+      {vista === 'cuentas' && <Traspasos state={state} mk={mk} A={A} />}
 
       {vista === 'cuentas' && (
         <>

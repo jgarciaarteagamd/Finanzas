@@ -360,6 +360,11 @@ export function flujoCuentas(state, mk, cache = new Map()) {
     const mom = { inicio: { in: 0, out: 0, lineas: [] }, medio: { in: 0, out: 0, lineas: [] }, fin: { in: 0, out: 0, lineas: [] } };
     res.ingresos.forEach((l) => { if (l.cuenta === c.id && l.importe) { mom[l.momento].in += l.importe; mom[l.momento].lineas.push(l); } });
     res.gastos.forEach((l) => { if (l.cuenta === c.id && l.importe) { mom[l.momento].out += l.importe; mom[l.momento].lineas.push(l); } });
+    traspasosDelMes(state, mk).forEach((t) => {
+      const m = mom[t.momento] || mom.inicio;
+      if (t.cuentaOrigenId === c.id) { m.out += t.importe; m.lineas.push({ ...t, tipo: 'traspaso', direccion: 'salida' }); }
+      if (t.cuentaDestinoId === c.id) { m.in += t.importe; m.lineas.push({ ...t, tipo: 'traspaso', direccion: 'entrada' }); }
+    });
     res.aportaciones.forEach((a) => {
       const o = a.objetivo;
       if (!o.cuentaOrigenId || !o.cuentaDestinoId || !(a.importe > 0)) return;
@@ -379,6 +384,16 @@ export function flujoCuentas(state, mk, cache = new Map()) {
   const out = { mk, cuentas, resumen: res };
   cache.set(mk, out);
   return out;
+}
+
+// Un único registro y un único real mensual mantienen ambos lados vinculados.
+export function traspasosDelMes(state, mk) {
+  return state.movimientos.filter((x) => x.tipo === 'traspaso' && aplica(x, mk)).map((x) => {
+    const value = state.meses?.[mk]?.reales?.[x.id];
+    const real = value === undefined || value === null ? undefined : Number(value);
+    return { ...x, key: x.id, estimado: Number(x.importe) || 0, real,
+      importe: real ?? (Number(x.importe) || 0), confirmado: real !== undefined };
+  });
 }
 
 /* Sugerencias de traspaso interno para cubrir déficits. */

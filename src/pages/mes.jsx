@@ -1,3 +1,4 @@
+import { Traspasos } from './traspasos.jsx';
 import React, { useMemo, useState } from 'react';
 import { Check, CheckCheck, Plus, FileUp, FileText } from 'lucide-react';
 import * as E from '../engine.js';
@@ -57,6 +58,8 @@ export function MesPage({ state, mk, A, go }) {
           );
         })}
       </div>
+
+      <Traspasos state={state} mk={mk} A={A} />
 
       <Card title="Aportaciones a objetivos" sub="Lo que apartas del superávit este mes. El estimado sale del % de cada objetivo; confirma lo que de verdad traspasas.">
         <div className="tablewrap">
