@@ -10,7 +10,7 @@ export function HistorialPage({ state, mk, setMk, go }) {
   const desde = rango === 'anio' ? (mk.slice(0, 4) + '-01' < inicio ? inicio : mk.slice(0, 4) + '-01') : inicio;
   const n = rango === 'anio' ? E.monthsBetween(desde, mk.slice(0, 4) + '-12') + 1 : Math.max(12, E.monthsBetween(inicio, mk) + 1);
   const serie = useMemo(() => E.serieMeses(state, desde, n), [state, desde, n]);
-  const areas = E.AREAS.map((a) => a.key).filter((k) => serie.some((s) => (s.porArea[k] || 0) > 0));
+  const areas = E.categorias(state).map((a) => a.key).filter((k) => serie.some((s) => (s.porArea[k] || 0) > 0));
   const tot = (f) => serie.reduce((s, x) => s + (typeof f === 'function' ? f(x) : x[f]), 0);
   const estadoPill = (e) => (e === 'cerrado' ? 'ok' : e === 'en curso' ? 'warn' : 'neutral');
 
@@ -34,7 +34,7 @@ export function HistorialPage({ state, mk, setMk, go }) {
             <tbody>
               <tr><td><b style={{ color: 'var(--in)' }}>Ingresos</b></td>{serie.map((s) => <td key={s.mk} className="n">{E.eur0(s.ingresos)}</td>)}<td className="n"><b>{E.eur0(tot('ingresos'))}</b></td></tr>
               {areas.map((k) => (
-                <tr key={k}><td><span className="row" style={{ gap: 7 }}><span className="swatch" style={{ background: colorArea(k) }} />{E.areaDe(k).label}</span></td>{serie.map((s) => <td key={s.mk} className="n ink2">{s.porArea[k] ? E.eur0(s.porArea[k]) : '—'}</td>)}<td className="n">{E.eur0(tot((x) => x.porArea[k] || 0))}</td></tr>
+                <tr key={k}><td><span className="row" style={{ gap: 7 }}><span className="swatch" style={{ background: colorArea(k, state) }} />{E.areaDe(k, state).label}</span></td>{serie.map((s) => <td key={s.mk} className="n ink2">{s.porArea[k] ? E.eur0(s.porArea[k]) : '—'}</td>)}<td className="n">{E.eur0(tot((x) => x.porArea[k] || 0))}</td></tr>
               ))}
               <tr><td><b style={{ color: 'var(--out)' }}>Gastos</b></td>{serie.map((s) => <td key={s.mk} className="n"><b>{E.eur0(s.gastos)}</b></td>)}<td className="n"><b>{E.eur0(tot('gastos'))}</b></td></tr>
               <tr className="tot"><td>Superávit</td>{serie.map((s) => <td key={s.mk} className="n" style={{ color: s.superavit < 0 ? 'var(--crit)' : undefined }}>{E.eur0(s.superavit)}</td>)}<td className="n">{E.eur0(tot('superavit'))}</td></tr>

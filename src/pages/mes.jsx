@@ -53,7 +53,7 @@ export function MesPage({ state, mk, A, go }) {
                 {pend > 0 && <button className="btn ghost sm" onClick={() => confirmarMomento(m.key)} title="Marca como pagado o cobrado con el importe estimado"><CheckCheck size={14} /> Confirmar {pend}</button>}
               </div>
               {ls.length === 0 && <div className="note">Nada {filtro === 'pend' ? 'pendiente' : ''} en este momento del mes.</div>}
-              {ls.map((l) => <Linea key={l.key} l={l} mk={mk} A={A} cuenta={cuenta} />)}
+              {ls.map((l) => <Linea state={state} key={l.key} l={l} mk={mk} A={A} cuenta={cuenta} />)}
             </div>
           );
         })}
@@ -86,9 +86,9 @@ export function MesPage({ state, mk, A, go }) {
   );
 }
 
-function Linea({ l, mk, A, cuenta }) {
+function Linea({ l, mk, A, cuenta, state }) {
   const esIn = l.tipo === 'ingreso';
-  const rail = esIn ? 'var(--in)' : l.origen === 'tarjeta' ? 'var(--m2)' : colorArea(l.area);
+  const rail = esIn ? 'var(--in)' : l.origen === 'tarjeta' ? 'var(--m2)' : colorArea(l.area, state);
   const I = esIn ? null : ICONO_MEDIO[l.medio];
   return (
     <div className={`line ${esIn ? 'in' : ''} ${l.confirmado ? 'done' : ''}`}>
@@ -98,7 +98,7 @@ function Linea({ l, mk, A, cuenta }) {
         <div className="lm">
           {I && <I size={12} />}
           <span>{l.origen === 'tarjeta' ? `Se carga en ${cuenta(l.cuenta)}` : cuenta(l.cuenta)}</span>
-          {!esIn && l.area && <span>· {E.areaDe(l.area).label}</span>}
+          {!esIn && l.area && <span>· {E.areaDe(l.area, state).label}</span>}
           {l.origen === 'extracto' && <span className="pill brand"><FileText size={11} /> Extracto</span>}
           {l.conExtracto && <span className="pill brand"><FileText size={11} /> {l.movsExtracto} compras</span>}
           {l.calculado && <span className="pill neutral">Auto {l.ref.porcentaje ?? 10} %</span>}

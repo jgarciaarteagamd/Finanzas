@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
-  LayoutDashboard, CalendarCheck2, TrendingUp, ReceiptText, HandCoins, Wallet, PiggyBank, History,
+  Tags, LayoutDashboard, CalendarCheck2, TrendingUp, ReceiptText, HandCoins, Wallet, PiggyBank, History,
   ChevronLeft, ChevronRight, Save, MoreHorizontal, Upload, Download, FileJson, X, FileUp,
 } from 'lucide-react';
 import { useStore } from './store.js';
@@ -14,6 +14,7 @@ import { CreditosPage } from './pages/creditos.jsx';
 import { CuentasPage } from './pages/cuentas.jsx';
 import { AhorroPage } from './pages/ahorro.jsx';
 import { HistorialPage } from './pages/historial.jsx';
+import { EtiquetasPage } from './pages/etiquetas.jsx';
 import { ImportarPage } from './pages/importar.jsx';
 
 const PAGES = [
@@ -24,6 +25,7 @@ const PAGES = [
   { key: 'creditos', label: 'Créditos', icon: HandCoins, C: CreditosPage },
   { key: 'cuentas', label: 'Cuentas y tarjetas', short: 'Cuentas', icon: Wallet, C: CuentasPage },
   { key: 'ahorro', label: 'Ahorro', icon: PiggyBank, C: AhorroPage },
+  { key: 'etiquetas', label: 'Etiquetas', icon: Tags, C: EtiquetasPage },
   { key: 'historial', label: 'Historial', icon: History, C: HistorialPage },
   { key: 'importar', label: 'Importar extractos', short: 'Importar', icon: FileUp, C: ImportarPage, destacado: true },
 ];

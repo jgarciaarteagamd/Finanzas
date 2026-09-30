@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Drawer, Field } from './ui.jsx';
-import { num, MESES, FRECUENCIAS, MOMENTOS, AREAS, MEDIOS, nid } from './engine.js';
+import { num, MESES, FRECUENCIAS, MOMENTOS, categorias, subcategorias, MEDIOS, nid } from './engine.js';
 
 /* Formulario genérico en panel lateral, definido por una lista de campos.
    Tipos: text, money, number, select, month, date, textarea, check, datalist */
@@ -148,20 +148,20 @@ export function IngresoForm({ open, item, state, mk, onSave, onDelete, onClose }
 export function GastoForm({ open, item, state, mk, onSave, onDelete, onClose, preset }) {
   const cuentas = state.config.cuentas.map((c) => ({ value: c.id, label: c.nombre }));
   const tarjetas = state.config.tarjetas.map((t) => ({ value: t.id, label: t.nombre }));
-  const subsDe = (area) => [...new Set(state.movimientos.filter((x) => x.tipo === 'gasto' && x.area === area && x.sub).map((x) => x.sub))];
+  const subsDe = (area) => subcategorias(state, area);
   const { y, m } = { y: Number(mk.slice(0, 4)), m: Number(mk.slice(5)) };
   const base = item || { tipo: 'gasto', area: 'otros', medio: 'recibo', frecuencia: 'mensual', momento: 'inicio', cuenta: cuentas[0]?.value, tarjetaId: tarjetas[0]?.value, mesEsporadico: String(m), anoEsporadico: y, ...(preset || {}) };
   const initial = { ...base, calcula: base.calculado === 'diezmo', mesReferencia: base.mesReferencia ? String(base.mesReferencia) : '1', mesEsporadico: base.mesEsporadico ? String(base.mesEsporadico) : String(m) };
   const fields = [
     { name: 'nombre', label: 'Concepto', required: true, placeholder: 'Ej. Supermercado' },
-    { name: 'area', label: 'Categoría', type: 'select', pair: true, options: AREAS.filter((a) => a.key !== 'creditos').map((a) => ({ value: a.key, label: a.label })) },
+    { name: 'area', label: 'Categoría', type: 'select', pair: true, options: categorias(state).filter((a) => a.key !== 'creditos').map((a) => ({ value: a.key, label: a.label })) },
     { name: 'sub', label: 'Subcategoría', type: 'datalist', pair: true, options: (v) => subsDe(v.area), placeholder: 'Ej. Suministros' },
     { name: 'medio', label: 'Cómo se paga', type: 'select', options: MEDIOS.map((x) => ({ value: x.key, label: x.label })) },
     { name: 'tarjetaId', label: 'Tarjeta', type: 'select', options: tarjetas, show: (v) => v.medio === 'tarjeta', hint: 'La tarjeta decide cuándo y desde qué cuenta se carga.' },
     { name: 'cuenta', label: 'Sale de la cuenta', type: 'select', options: cuentas, pair: true, show: (v) => v.medio !== 'tarjeta' },
     { name: 'momento', label: 'Cuándo del mes', type: 'select', options: MOM_OPTS, pair: true, show: (v) => v.medio !== 'tarjeta' },
-    { name: 'calcula', label: 'Calcular como % de los ingresos del mes (como el diezmo)', type: 'check', show: (v) => v.medio !== 'tarjeta' },
-    { name: 'porcentaje', label: '% de los ingresos', type: 'number', show: (v) => v.calcula && v.medio !== 'tarjeta', emptyAs: 10 },
+    { name: 'calcula', label: 'Calcular como % de los ingresos de esta cuenta (diezmo)', type: 'check', show: (v) => v.medio !== 'tarjeta' },
+    { name: 'porcentaje', label: '% de los ingresos de la cuenta', type: 'number', show: (v) => v.calcula && v.medio !== 'tarjeta', emptyAs: 10 },
     { name: 'importe', label: 'Importe estimado (€)', type: 'money', show: (v) => !(v.calcula && v.medio !== 'tarjeta'), required: true, hint: (v) => (v.medio === 'tarjeta' ? 'Aproximado: suma al estimado de la tarjeta.' : '') },
     ...camposFrecuencia,
     { name: 'notas', label: 'Notas', type: 'textarea' },
@@ -170,7 +170,7 @@ export function GastoForm({ open, item, state, mk, onSave, onDelete, onClose, pr
     const out = limpiarFrecuencia({ ...o, id: o.id || nid('gas'), tipo: 'gasto' });
     if (out.medio === 'tarjeta') { delete out.cuenta; delete out.momento; delete out.calculado; delete out.porcentaje; out.calcula = false; }
     else delete out.tarjetaId;
-    if (out.calcula) { out.calculado = 'diezmo'; out.importe = 0; out.porcentaje = Number(out.porcentaje) || 10; } else { delete out.calculado; delete out.porcentaje; }
+    if (out.calcula) { out.calculado = 'diezmo'; out.importe = 0; out.porcentaje = out.porcentaje === null ? 10 : Number(out.porcentaje); } else { delete out.calculado; delete out.porcentaje; }
     delete out.calcula;
     onSave(out);
   };
@@ -255,6 +255,8 @@ export function TraspasoForm({ open, item, state, mk, onSave, onDelete, onClose 
     mesEsporadico: String(Number(mk.slice(5))), anoEsporadico: Number(mk.slice(0, 4)) };
   const fields = [
     { name: 'nombre', label: 'Concepto', required: true, placeholder: 'Ej. Aportación a BBVA' },
+    { name: 'area', label: 'Categoría', type: 'select', placeholder: 'Sin etiqueta', options: categorias(state).map((a) => ({ value: a.key, label: a.label })) },
+    { name: 'sub', label: 'Subcategoría', type: 'datalist', options: (v) => subcategorias(state, v.area), show: (v) => !!v.area, clearWhenHidden: true },
     { name: 'cuentaOrigenId', label: 'Cuenta de origen', type: 'select', options: cuentas, placeholder: 'Selecciona cuenta', required: true },
     { name: 'cuentaDestinoId', label: 'Cuenta de destino', type: 'select', options: cuentas, placeholder: 'Selecciona cuenta', required: true },
     { name: 'importe', label: 'Importe (€)', type: 'money', required: true },

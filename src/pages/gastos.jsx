@@ -22,7 +22,7 @@ export function GastosPage({ state, mk, A, focus, setFocus, go }) {
   const noMensuales = res.gastos.filter((l) => l.origen === 'mov' && l.ref.frecuencia !== 'mensual').sort((a, b) => b.importe - a.importe);
   const noMensual = noMensuales.reduce((s, l) => s + l.importe, 0);
   const tarjetas = res.gastos.filter((l) => l.origen === 'tarjeta').reduce((s, l) => s + l.importe, 0);
-  const areasConDatos = E.AREAS.map((a) => a.key).filter((k) => serie.some((s) => (s.porArea[k] || 0) > 0));
+  const areasConDatos = E.categorias(state).map((a) => a.key).filter((k) => serie.some((s) => (s.porArea[k] || 0) > 0));
   const abierta = filtroArea !== 'todas' ? [filtroArea] : [];
 
   return (
@@ -49,8 +49,8 @@ export function GastosPage({ state, mk, A, focus, setFocus, go }) {
             </Card>
           </div>
           <Card title="Evolución por categoría" sub="Gasto de cada mes apilado por categoría. Barras claras: previsión.">
-            <MonthBars series={serie.map((s) => ({ mk: s.mk, estado: s.estado, values: s.porArea }))} keys={areasConDatos} colorOf={colorArea} labelOf={(k) => E.areaDe(k).label} height={260} valueLabel="Gasto por categoría y mes" />
-            <LegendAreas keys={areasConDatos} />
+            <MonthBars series={serie.map((s) => ({ mk: s.mk, estado: s.estado, values: s.porArea }))} keys={areasConDatos} colorOf={(k) => colorArea(k, state)} labelOf={(k) => E.areaDe(k, state).label} height={260} valueLabel="Gasto por categoría y mes" />
+            <LegendAreas state={state} keys={areasConDatos} />
           </Card>
         </>
       )}
@@ -69,9 +69,9 @@ function Configurar({ state, mk, agrupar, setAgrupar, filtroArea, setFiltroArea,
   const gastos = state.movimientos.filter((x) => x.tipo === 'gasto' && (filtroArea === 'todas' || x.area === filtroArea));
   const grupos = [];
   if (agrupar === 'area') {
-    E.AREAS.forEach((a) => {
+    E.categorias(state).forEach((a) => {
       const items = gastos.filter((x) => x.area === a.key);
-      if (items.length) grupos.push({ key: a.key, titulo: a.label, color: colorArea(a.key), items, total: items.reduce((s, x) => s + E.equivalenteMensual(x), 0) });
+      if (items.length) grupos.push({ key: a.key, titulo: a.label, color: colorArea(a.key, state), items, total: items.reduce((s, x) => s + E.equivalenteMensual(x), 0) });
     });
   } else {
     state.config.tarjetas.forEach((t) => {
@@ -92,7 +92,7 @@ function Configurar({ state, mk, agrupar, setAgrupar, filtroArea, setFiltroArea,
         <Seg value={agrupar} onChange={setAgrupar} ariaLabel="Agrupar por" options={[{ key: 'area', label: 'Por categoría' }, { key: 'medio', label: 'Por tarjeta y medio de pago' }]} />
         <select className="in-ctl" style={{ width: 'auto' }} value={filtroArea} onChange={(e) => setFiltroArea(e.target.value)} aria-label="Filtrar por categoría">
           <option value="todas">Todas las categorías</option>
-          {E.AREAS.filter((a) => a.key !== 'creditos').map((a) => <option key={a.key} value={a.key}>{a.label}</option>)}
+          {E.categorias(state).filter((a) => a.key !== 'creditos').map((a) => <option key={a.key} value={a.key}>{a.label}</option>)}
         </select>
       </div>
       {agrupar === 'medio' && <div className="note">Lo que pones en cada tarjeta es aproximado: sirve para ver la tendencia y como estimado del mes. El cargo real de cada tarjeta lo confirmas en «Mes a mes».</div>}
@@ -108,7 +108,7 @@ function Configurar({ state, mk, agrupar, setAgrupar, filtroArea, setFiltroArea,
                 return (
                   <button key={x.id} className="arearow" onClick={() => onEdit(x)} style={{ gridTemplateColumns: 'minmax(0,1fr) auto auto' }}>
                     <span style={{ minWidth: 0 }}>
-                      <span className="nm"><span className="swatch" style={{ background: colorArea(x.area) }} /><span className="t">{x.nombre}</span></span>
+                      <span className="nm"><span className="swatch" style={{ background: colorArea(x.area, state) }} /><span className="t">{x.nombre}</span></span>
                       <span className="tiny muted row" style={{ gap: 5, marginTop: 2 }}><I size={12} />{x.sub ? `${x.sub} · ` : ''}{frec(x)} · {donde(x)}</span>
                     </span>
                     <span className="vl">{x.calculado ? `${x.porcentaje ?? 10} % ingresos` : E.eur(x.importe)}</span>

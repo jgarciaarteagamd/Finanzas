@@ -54,7 +54,7 @@ export function ResumenPage({ state, mk, go }) {
       )}
 
       <div className="grid">
-        <Card className="c8" title="Flujo del dinero" sub="De dónde viene, en qué cuenta entra o de cuál sale, y a qué se destina. Pasa el cursor por una franja para ver el importe.">
+        <Card className="c8" title="Flujo del dinero" sub="De dónde viene, en qué cuenta entra o de cuál sale, y a qué se destina. Las franjas discontinuas son traspasos internos: muestran el destino del dinero sin aumentar ingresos ni gastos.">
           {flujo.links.length ? <Sankey data={flujo} height={420} /> : <p className="muted">Sin movimientos este mes.</p>}
           <div className="legend">
             <span><span className="swatch" style={{ background: 'var(--in)' }} />Ingresos</span>
